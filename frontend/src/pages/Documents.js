@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import Modal from '../components/Modal';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -16,16 +16,37 @@ function Documents() {
   const [showModal, setShowModal] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showOCR, setShowOCR] = useState(false);
   const [form, setForm] = useState(emptyDoc);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // OCR state
+  const [ocrFile, setOcrFile] = useState(null);
+  const [ocrCaseId, setOcrCaseId] = useState('');
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrResult, setOcrResult] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
+
   const load = () => {
-    api.get('/documents').then(r => setItems(r.data)).catch(() => {});
-    api.get('/cases').then(r => setCases(r.data)).catch(() => {});
-    api.get('/clients').then(r => setClients(r.data)).catch(() => {});
+    api.get(`/documents?page=${page}&limit=${limit}`).then(r => {
+      if (r.data.data) {
+        setItems(r.data.data);
+        setTotalPages(r.data.pagination?.totalPages || 1);
+      } else {
+        setItems(Array.isArray(r.data) ? r.data : []);
+      }
+    }).catch(() => {});
+    api.get('/cases').then(r => setCases(Array.isArray(r.data) ? r.data : r.data.data || [])).catch(() => {});
+    api.get('/clients').then(r => setClients(Array.isArray(r.data) ? r.data : r.data.data || [])).catch(() => {});
   };
-  useEffect(() => { load(); }, []);
+
+  useEffect(() => { load(); }, [page]);
 
   const getBadgeClass = (s) => {
     const m = { pending: 'badge-warning', submitted: 'badge-info', verified: 'badge-primary', approved: 'badge-success', rejected: 'badge-danger', completed: 'badge-success' };
@@ -52,12 +73,118 @@ function Documents() {
     catch (err) { setToast({ message: 'Error deleting', type: 'error' }); }
   };
 
+  const handleOCRUpload = async () => {
+    if (!ocrFile) { setToast({ message: 'Please select a file', type: 'error' }); return; }
+    setOcrLoading(true);
+    setOcrResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', ocrFile);
+      if (ocrCaseId) formData.append('case_id', ocrCaseId);
+
+      const res = await api.post('/ai/document-ocr', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setOcrResult(res.data);
+    } catch (err) {
+      if (err.response?.status === 429) {
+        setToast({ message: 'AI request limit reached. Please wait.', type: 'error' });
+      } else {
+        setToast({ message: err.response?.data?.error || 'OCR extraction failed', type: 'error' });
+      }
+    }
+    setOcrLoading(false);
+  };
+
+  const handleSaveOCRToCase = async () => {
+    if (!ocrResult?.structured) { setToast({ message: 'No extracted data to save', type: 'error' }); return; }
+    const s = ocrResult.structured;
+    try {
+      await api.post('/documents', {
+        document_name: s.applicant_name || ocrFile?.name || 'Extracted Document',
+        document_type: s.document_type || 'Unknown',
+        case_id: ocrCaseId || null,
+        status: 'pending',
+        notes: s.extracted_text ? s.extracted_text.substring(0, 500) : null,
+      });
+      setToast({ message: 'Document saved to case', type: 'success' });
+      setShowOCR(false);
+      setOcrResult(null);
+      setOcrFile(null);
+      load();
+    } catch (err) {
+      setToast({ message: 'Error saving document', type: 'error' });
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
         <div><h1>Documents</h1><p>Manage case documents</p></div>
-        <div className="page-actions"><button className="btn btn-primary" onClick={handleNew}><i className="fa-solid fa-plus"></i> New Document</button></div>
+        <div className="page-actions">
+          <button className="btn btn-secondary" onClick={() => setShowOCR(true)}>
+            <i className="fa-solid fa-scanner"></i> Upload &amp; Extract
+          </button>
+          <button className="btn btn-primary" onClick={handleNew}><i className="fa-solid fa-plus"></i> New Document</button>
+        </div>
       </div>
+
+      {/* OCR Upload Panel */}
+      {showOCR && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 24, marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3><i className="fa-solid fa-scanner" style={{ color: 'var(--primary-light)' }}></i> Upload &amp; Extract Document</h3>
+            <button className="btn btn-secondary btn-sm" onClick={() => { setShowOCR(false); setOcrResult(null); setOcrFile(null); }}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Document File (Image or PDF)</label>
+              <input type="file" ref={fileInputRef} accept="image/*,.pdf" onChange={e => setOcrFile(e.target.files[0])} style={{ display: 'block', padding: '8px 0' }} />
+              {ocrFile && <small style={{ color: 'var(--text-secondary)' }}>{ocrFile.name} ({(ocrFile.size / 1024).toFixed(1)} KB)</small>}
+            </div>
+            <div className="form-group">
+              <label>Link to Case (optional)</label>
+              <select value={ocrCaseId} onChange={e => setOcrCaseId(e.target.value)}>
+                <option value="">Select case...</option>
+                {cases.map(c => <option key={c.id} value={c.id}>{c.case_number}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <button className="btn btn-primary" onClick={handleOCRUpload} disabled={ocrLoading || !ocrFile}>
+            {ocrLoading ? <><i className="fa-solid fa-spinner fa-spin"></i> Extracting...</> : <><i className="fa-solid fa-robot"></i> Extract with AI</>}
+          </button>
+
+          {ocrResult?.structured && (
+            <div style={{ marginTop: 20, padding: 20, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 16 }}>Extracted Fields</h4>
+              <div className="detail-grid">
+                {ocrResult.structured.applicant_name && <div className="detail-field"><label>Applicant Name</label><span>{ocrResult.structured.applicant_name}</span></div>}
+                {ocrResult.structured.document_type && <div className="detail-field"><label>Document Type</label><span>{ocrResult.structured.document_type}</span></div>}
+                {ocrResult.structured.a_number && <div className="detail-field"><label>A-Number</label><span>{ocrResult.structured.a_number}</span></div>}
+                {ocrResult.structured.receipt_number && <div className="detail-field"><label>Receipt Number</label><span>{ocrResult.structured.receipt_number}</span></div>}
+                {ocrResult.structured.status && <div className="detail-field"><label>Status</label><span>{ocrResult.structured.status}</span></div>}
+                {ocrResult.structured.important_notes?.length > 0 && (
+                  <div className="detail-field full-width">
+                    <label>Important Notes</label>
+                    <ul style={{ margin: 0, paddingLeft: 16 }}>
+                      {ocrResult.structured.important_notes.map((n, i) => <li key={i}>{n}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <button className="btn btn-primary" onClick={handleSaveOCRToCase}>
+                  <i className="fa-solid fa-floppy-disk"></i> Save to Case
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="data-table-container">
         <table className="data-table">
@@ -76,6 +203,15 @@ function Documents() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+          <button className="btn btn-secondary btn-sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+          <span style={{ padding: '6px 12px', fontSize: 14 }}>Page {page} of {totalPages}</span>
+          <button className="btn btn-secondary btn-sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
 
       {showDetail && selected && (
         <div className="modal-overlay" onClick={() => setShowDetail(false)}>

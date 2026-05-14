@@ -20,6 +20,9 @@ const navItems = [
   { path: '/notes', icon: 'fa-solid fa-sticky-note', label: 'Notes' },
   { section: 'AI Tools' },
   { path: '/ai', icon: 'fa-solid fa-robot', label: 'AI Assistant' },
+  { path: '/advanced-ai', icon: 'fa-solid fa-wand-magic-sparkles', label: 'Advanced AI' },
+  { section: 'Security' },
+  { path: '/audit-log', icon: 'fa-solid fa-shield-halved', label: 'Audit Log' },
 ];
 
 function Layout({ children, user, onLogout }) {

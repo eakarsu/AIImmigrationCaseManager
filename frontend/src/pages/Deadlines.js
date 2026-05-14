@@ -18,12 +18,18 @@ function Deadlines() {
   const [form, setForm] = useState(emptyItem);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
   const load = () => {
-    api.get('/deadlines').then(r => setItems(r.data)).catch(() => {});
-    api.get('/cases').then(r => setCases(r.data)).catch(() => {});
+    api.get(`/deadlines?page=${page}&limit=${limit}`).then(r => {
+      if (r.data.data) { setItems(r.data.data); setTotalPages(r.data.pagination?.totalPages || 1); }
+      else { setItems(Array.isArray(r.data) ? r.data : []); }
+    }).catch(() => {});
+    api.get('/cases').then(r => setCases(Array.isArray(r.data) ? r.data : r.data.data || [])).catch(() => {});
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [page]);
 
   const isOverdue = (date) => new Date(date) < new Date() && date;
   const getBadgeClass = (s) => ({ pending: 'badge-warning', completed: 'badge-success', overdue: 'badge-danger', cancelled: 'badge-secondary' }[s] || 'badge-secondary');
@@ -71,6 +77,14 @@ function Deadlines() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+          <button className="btn btn-secondary btn-sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</button>
+          <span style={{ padding: '6px 12px', fontSize: 14 }}>Page {page} of {totalPages}</span>
+          <button className="btn btn-secondary btn-sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
+        </div>
+      )}
 
       {showDetail && selected && (
         <div className="modal-overlay" onClick={() => setShowDetail(false)}>
