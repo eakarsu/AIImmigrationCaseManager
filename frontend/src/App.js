@@ -17,6 +17,7 @@ import AdvancedAITools from './pages/AdvancedAITools';
 import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
 import Layout from './components/Layout';
+import CustomViewsPage from './pages/CustomViewsPage';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticCaseManagerAutoGeneratingDoc from './pages/CfAgenticCaseManagerAutoGeneratingDoc';
@@ -86,6 +87,7 @@ function App() {
           <Route path="/advanced-ai" element={<AdvancedAITools />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/audit-log" element={<AuditLog />} />
+          <Route path="/custom-views" element={<CustomViewsPage />} />
           {/* // === Batch 04 Gaps & Frontend Mounts === */}
           <Route path="/cf-agentic-case-manager-auto-generating-doc" element={<CfAgenticCaseManagerAutoGeneratingDoc />} />
           <Route path="/cf-interview-preparation-ai-with-practice-q" element={<CfInterviewPreparationAiWithPracticeQ />} />

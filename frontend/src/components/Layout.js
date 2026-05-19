@@ -23,6 +23,8 @@ const navItems = [
   { path: '/advanced-ai', icon: 'fa-solid fa-wand-magic-sparkles', label: 'Advanced AI' },
   { section: 'Security' },
   { path: '/audit-log', icon: 'fa-solid fa-shield-halved', label: 'Audit Log' },
+  { section: 'Custom' },
+  { path: '/custom-views', icon: 'fa-solid fa-layer-group', label: 'Case Views' },
 ];
 
 function Layout({ children, user, onLogout }) {

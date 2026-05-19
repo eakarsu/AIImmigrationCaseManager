@@ -88,6 +88,12 @@ app.use('/api/gap-no-e-signature-integration', route_gap_no_e_signature_integrat
 app.use('/api/gap-limited-notifications-module-0-explicit-', route_gap_limited_notifications_module_0_explicit_);
 app.use('/api/gap-no-webhook-surface-for-case-event', route_gap_no_webhook_surface_for_case_event);
 
+// Custom Views (mounted before 404 handler)
+app.use('/api/custom-views', require('./routes/customViews'));
+
+// 404 handler (must remain after all route mounts)
+app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
 });
