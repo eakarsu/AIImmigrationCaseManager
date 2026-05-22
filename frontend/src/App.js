@@ -18,6 +18,7 @@ import Reports from './pages/Reports';
 import AuditLog from './pages/AuditLog';
 import Layout from './components/Layout';
 import CustomViewsPage from './pages/CustomViewsPage';
+import UscisReceiptNoticeTracker from './pages/UscisReceiptNoticeTracker';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticCaseManagerAutoGeneratingDoc from './pages/CfAgenticCaseManagerAutoGeneratingDoc';
@@ -36,6 +37,11 @@ import GapNoDocumentVaultWithFieldLevel from './pages/GapNoDocumentVaultWithFiel
 import GapNoESignatureIntegration from './pages/GapNoESignatureIntegration';
 import GapLimitedNotificationsModule0Explicit from './pages/GapLimitedNotificationsModule0Explicit';
 import GapNoWebhookSurfaceForCaseEvent from './pages/GapNoWebhookSurfaceForCaseEvent';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -72,6 +78,10 @@ function App() {
     <Router>
       <Layout user={user} onLogout={handleLogout}>
         <Routes>
+        <Route path="/insights/timeline" element={<TimelineView />} />
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/" element={<Dashboard />} />
           <Route path="/cases" element={<Cases />} />
           <Route path="/clients" element={<Clients />} />
@@ -88,6 +98,7 @@ function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/audit-log" element={<AuditLog />} />
           <Route path="/custom-views" element={<CustomViewsPage />} />
+          <Route path="/uscis-receipt-notice-tracker" element={<UscisReceiptNoticeTracker />} />
           {/* // === Batch 04 Gaps & Frontend Mounts === */}
           <Route path="/cf-agentic-case-manager-auto-generating-doc" element={<CfAgenticCaseManagerAutoGeneratingDoc />} />
           <Route path="/cf-interview-preparation-ai-with-practice-q" element={<CfInterviewPreparationAiWithPracticeQ />} />

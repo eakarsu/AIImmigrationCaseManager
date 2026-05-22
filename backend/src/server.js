@@ -90,6 +90,7 @@ app.use('/api/gap-no-webhook-surface-for-case-event', route_gap_no_webhook_surfa
 
 // Custom Views (mounted before 404 handler)
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/uscis-receipt-notice-tracker', auditLog, require('./routes/uscisReceiptNoticeTracker'));
 
 // 404 handler (must remain after all route mounts)
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));

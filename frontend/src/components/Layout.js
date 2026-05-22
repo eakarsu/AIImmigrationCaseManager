@@ -13,6 +13,7 @@ const navItems = [
   { section: 'Immigration' },
   { path: '/visas', icon: 'fa-solid fa-passport', label: 'Visa Applications' },
   { path: '/status-tracking', icon: 'fa-solid fa-route', label: 'Status Tracking' },
+  { path: '/uscis-receipt-notice-tracker', icon: 'fa-solid fa-envelope-open-text', label: 'Receipt Notices' },
   { path: '/compliance', icon: 'fa-solid fa-shield-halved', label: 'Compliance' },
   { section: 'Operations' },
   { path: '/deadlines', icon: 'fa-solid fa-clock', label: 'Deadlines' },
