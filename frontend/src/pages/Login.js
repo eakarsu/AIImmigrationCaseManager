@@ -20,11 +20,6 @@ function Login({ onLogin }) {
     setLoading(false);
   };
 
-  const autoFill = () => {
-    setEmail('admin@immigrationlaw.com');
-    setPassword('password123');
-  };
-
   return (
     <div className="login-container">
       <div className="login-card">
@@ -51,9 +46,6 @@ function Login({ onLogin }) {
             {loading ? <><div className="spinner" style={{ width: 18, height: 18, borderWidth: 2 }}></div> Signing in...</> : <><i className="fa-solid fa-right-to-bracket"></i> Sign In</>}
           </button>
         </form>
-        <button className="btn btn-autofill" onClick={autoFill}>
-          <i className="fa-solid fa-wand-magic-sparkles"></i> Auto-fill Demo Credentials
-        </button>
       </div>
     </div>
   );

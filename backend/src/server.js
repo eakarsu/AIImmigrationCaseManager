@@ -25,19 +25,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 
-// Create audit_log table on startup
-pool.query(`
-  CREATE TABLE IF NOT EXISTS audit_log (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER,
-    action TEXT,
-    entity_type TEXT,
-    entity_id INTEGER,
-    ip_address TEXT,
-    timestamp TIMESTAMP DEFAULT NOW()
-  )
-`).catch(e => console.error('audit_log table creation error:', e.message));
-
 // Audit logging middleware
 async function auditLog(req, res, next) {
   res.on('finish', async () => {
@@ -73,6 +60,7 @@ app.use('/api/integrations', require('./routes/integrations'));
 app.use('/api/calendar', require('./routes/calendar'));
 app.use('/api/interview-prep', require('./routes/interviewPrep'));
 app.use('/api/rfe-responder', require('./routes/rfeAutoResponder'));
+app.use('/api/governed-matters', require('./middleware/auth'), require('./routes/governedMatters'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
