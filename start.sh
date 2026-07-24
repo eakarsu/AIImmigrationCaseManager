@@ -3,6 +3,10 @@ set -euo pipefail
 project_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 require_setting(){ local name="$1"; if [ -z "${!name:-}" ] && ! grep -Eq "^${name}=.+" "$project_dir/.env" 2>/dev/null; then echo "Missing required setting: $name" >&2; exit 1; fi; }
 [ -f "$project_dir/.env" ] || { echo 'Create .env from .env.example first.' >&2; exit 1; }
+set -a
+# shellcheck disable=SC1091
+. "$project_dir/.env"
+set +a
 [ -d "$project_dir/backend/node_modules" ] && [ -d "$project_dir/frontend/node_modules" ] || { echo 'Dependencies are absent; install them explicitly with npm ci in backend/ and frontend/.' >&2; exit 1; }
 for name in JWT_SECRET DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do require_setting "$name"; done
 jwt_secret="${JWT_SECRET:-$(sed -n 's/^JWT_SECRET=//p' "$project_dir/.env" | tail -n 1)}"

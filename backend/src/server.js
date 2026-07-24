@@ -20,7 +20,7 @@ const PORT = process.env.BACKEND_PORT || 3001;
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CORS_ORIGIN || process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
