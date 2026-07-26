@@ -83,6 +83,10 @@ set -a
 . "$project_dir/.env"
 set +a
 [ -d "$project_dir/backend/node_modules" ] && [ -d "$project_dir/frontend/node_modules" ] || { echo 'Dependencies are absent; install them explicitly with npm ci in backend/ and frontend/.' >&2; exit 1; }
+if [ "${NODE_ENV:-development}" != production ] && [ "${ENABLE_DEMO_CREDENTIAL_AUTOFILL:-true}" = true ]; then
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$project_dir/backend/migrations/002_identity_scope.sql" >/dev/null
+  BOOTSTRAP_ACKNOWLEDGEMENT=create-initial-admin node "$project_dir/backend/scripts/create-admin.js"
+fi
 for name in JWT_SECRET DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do require_setting "$name"; done
 jwt_secret="${JWT_SECRET:-$(sed -n 's/^JWT_SECRET=//p' "$project_dir/.env" | tail -n 1)}"
 [ "${#jwt_secret}" -ge 32 ] || { echo 'JWT_SECRET must contain at least 32 characters.' >&2; exit 1; }
